@@ -1,0 +1,127 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String    @id @default(uuid())
+  email           String    @unique
+  password        String
+  name            String
+  bio             String?
+  profilePhotoURL String?
+  isPrivate       Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  lastSeen        DateTime  @default(now())
+
+  followers       Follow[]  @relation("following")
+  following       Follow[]  @relation("follower")
+  posts           Post[]
+  likes           Like[]
+  comments        Comment[]
+  stories         Story[]
+  sentMessages    Message[]
+  
+  conversations   ConversationParticipant[]
+}
+
+model InviteToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  isUsed    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Follow {
+  id          String   @id @default(uuid())
+  followerId  String
+  followingId String
+  status      String   @default("PENDING") // PENDING, ACCEPTED
+  createdAt   DateTime @default(now())
+
+  follower    User     @relation("follower", fields: [followerId], references: [id])
+  following   User     @relation("following", fields: [followingId], references: [id])
+
+  @@unique([followerId, followingId])
+}
+
+model Post {
+  id        String    @id @default(uuid())
+  userId    String
+  imageURL  String
+  caption   String?
+  createdAt DateTime  @default(now())
+
+  user      User      @relation(fields: [userId], references: [id])
+  likes     Like[]
+  comments  Comment[]
+}
+
+model Like {
+  id        String   @id @default(uuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([postId, userId])
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  postId    String
+  userId    String
+  text      String
+  createdAt DateTime @default(now())
+
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Story {
+  id        String   @id @default(uuid())
+  userId    String
+  imageURL  String
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Conversation {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  
+  participants ConversationParticipant[]
+  messages     Message[]
+}
+
+model ConversationParticipant {
+  conversationId String
+  userId         String
+  
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  user           User         @relation(fields: [userId], references: [id])
+
+  @@id([conversationId, userId])
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  chatId    String
+  senderId  String
+  text      String?
+  imageURL  String?
+  postId    String?
+  createdAt DateTime @default(now())
+  seenBy    String   @default("[]") // JSON string of user IDs
+
+  conversation Conversation @relation(fields: [chatId], references: [id])
+  sender       User         @relation(fields: [senderId], references: [id])
+}
