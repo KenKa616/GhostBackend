@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -22,11 +13,11 @@ const createPostSchema = zod_1.z.object({
 const commentSchema = zod_1.z.object({
     text: zod_1.z.string().min(1)
 });
-const createPost = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const createPost = async (req, res) => {
     try {
         const userId = req.user.userId;
         const { imageURL, caption } = createPostSchema.parse(req.body);
-        const post = yield client_1.default.post.create({
+        const post = await client_1.default.post.create({
             data: {
                 userId,
                 imageURL,
@@ -41,13 +32,13 @@ const createPost = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         }
         res.status(500).json({ error: 'Internal server error' });
     }
-});
+};
 exports.createPost = createPost;
-const getFeed = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const getFeed = async (req, res) => {
     try {
         const userId = req.user.userId;
         // Get posts from users I follow
-        const posts = yield client_1.default.post.findMany({
+        const posts = await client_1.default.post.findMany({
             where: {
                 user: {
                     followers: {
@@ -76,13 +67,13 @@ const getFeed = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     catch (error) {
         res.status(500).json({ error: 'Internal server error' });
     }
-});
+};
 exports.getFeed = getFeed;
-const likePost = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const likePost = async (req, res) => {
     try {
         const userId = req.user.userId;
         const postId = req.params.postId;
-        yield client_1.default.like.create({
+        await client_1.default.like.create({
             data: {
                 userId,
                 postId
@@ -93,13 +84,13 @@ const likePost = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     catch (error) {
         res.status(400).json({ error: 'Already liked or error' });
     }
-});
+};
 exports.likePost = likePost;
-const unlikePost = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const unlikePost = async (req, res) => {
     try {
         const userId = req.user.userId;
         const postId = req.params.postId;
-        yield client_1.default.like.delete({
+        await client_1.default.like.delete({
             where: {
                 postId_userId: {
                     postId,
@@ -112,14 +103,14 @@ const unlikePost = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     catch (error) {
         res.status(400).json({ error: 'Not liked or error' });
     }
-});
+};
 exports.unlikePost = unlikePost;
-const addComment = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const addComment = async (req, res) => {
     try {
         const userId = req.user.userId;
         const postId = req.params.postId;
         const { text } = commentSchema.parse(req.body);
-        const comment = yield client_1.default.comment.create({
+        const comment = await client_1.default.comment.create({
             data: {
                 userId,
                 postId,
@@ -137,5 +128,5 @@ const addComment = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         }
         res.status(500).json({ error: 'Internal server error' });
     }
-});
+};
 exports.addComment = addComment;
